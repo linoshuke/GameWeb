@@ -1,0 +1,166 @@
+body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #000;
+    font-family: Arial, sans-serif;
+}
+
+.game-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+}
+
+canvas {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4/3;
+    touch-action: none;
+    border: 2px solid #fff;
+    background-color: #000;
+}
+
+.game-info {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: #fff;
+    font-size: 20px;
+}
+
+.score, .level {
+    margin: 5px 0;
+}
+
+.game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+    border: 2px solid #fff;
+}
+
+.game-over h1 {
+    color: #ff0000;
+    margin-bottom: 20px;
+}
+
+.game-over button {
+    background-color: #ff0000;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px;
+}
+
+.game-over button:hover {
+    background-color: #cc0000;
+}
+
+.hp-bar {
+    margin: 5px 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.hp-fill {
+    width: 100px;
+    height: 15px;
+    background-color: #333;
+    border: 1px solid #fff;
+    position: relative;
+    --hp-percent: 100%;
+}
+
+.hp-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--hp-percent);
+    background-color: #00ff00;
+    transition: width 0.3s;
+}
+
+#hpText {
+    margin-left: 5px;
+}
+
+/* Mobile controls */
+.mobile-controls {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    padding: 10px;
+    justify-content: space-around;
+    align-items: center;
+    gap: 10px;
+}
+
+.control-button {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid #fff;
+    color: #fff;
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-size: 24px;
+    touch-action: none;
+    user-select: none;
+    cursor: pointer;
+}
+
+#shootButton {
+    background: rgba(255, 0, 0, 0.3);
+    padding: 15px 35px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .mobile-controls {
+        display: flex;
+    }
+
+    .game-info {
+        font-size: 16px;
+    }
+
+    .hp-bar {
+        width: 80px;
+    }
+
+    body {
+        padding: 0;
+        margin: 0;
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+    }
+}
+
+/* Prevent scrolling on mobile */
+html {
+    height: -webkit-fill-available;
+    overflow: hidden;
+}
+
+body {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
