@@ -6,19 +6,27 @@ body {
     min-height: 100vh;
     background-color: #000;
     font-family: Arial, sans-serif;
+    overflow: hidden;
+    position: fixed;
+    height: 100%;
+    width: 100%;
 }
 
 .game-container {
     width: 100%;
+    height: 100%;
     max-width: 800px;
-    margin: 0 auto;
+    margin: auto;
     position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    aspect-ratio: auto;
 }
 
 canvas {
     width: 100%;
     height: auto;
-    aspect-ratio: 4/3;
     touch-action: none;
     border: 2px solid #fff;
     background-color: #000;
@@ -28,8 +36,27 @@ canvas {
     position: absolute;
     top: 10px;
     left: 10px;
-    color: #fff;
+    right: 10px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
     font-size: 20px;
+    transform: none;
+    z-index: 5;
+}
+
+.game-over, .mobile-controls {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.game-over {
+    z-index: 10;
 }
 
 .score, .level {
@@ -37,10 +64,6 @@ canvas {
 }
 
 .game-over {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     background-color: rgba(0, 0, 0, 0.9);
     padding: 20px;
     border-radius: 10px;
@@ -74,6 +97,7 @@ canvas {
     display: flex;
     align-items: center;
     gap: 5px;
+    min-width: 120px;
 }
 
 .hp-fill {
@@ -100,48 +124,151 @@ canvas {
     margin-left: 5px;
 }
 
-/* Mobile controls */
+/* Mobile controls dengan posisi yang dioptimalkan */
 .mobile-controls {
+    position: fixed; /* Mengubah ke fixed untuk posisi yang lebih stabil */
+    bottom: 5%; /* Menggunakan persentase untuk posisi yang lebih responsif */
+    left: 50%;
+    transform: translateX(-50%);
     display: none;
-    position: fixed;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    padding: 10px;
-    justify-content: space-around;
-    align-items: center;
-    gap: 10px;
+    justify-content: space-between; /* Mengubah ke space-between untuk distribusi yang lebih baik */
+    width: 90%;
+    max-width: 400px;
+    z-index: 5;
 }
 
 .control-button {
     background: rgba(255, 255, 255, 0.2);
-    border: 2px solid #fff;
-    color: #fff;
-    padding: 15px 25px;
-    border-radius: 10px;
-    font-size: 24px;
-    touch-action: none;
+    padding: 8px;
+    border-radius: 50%;
+    color: white;
+    touch-action: manipulation;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    font-size: 12px;
     user-select: none;
     cursor: pointer;
+    width: 50px; /* Memperbesar ukuran default button */
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
 }
 
-#shootButton {
-    background: rgba(255, 0, 0, 0.3);
-    padding: 15px 35px;
+/* Style khusus untuk button shoot */
+.control-button.shoot {
+    background: rgba(255, 0, 0, 0.2);
+    border-color: rgba(255, 0, 0, 0.5);
+    width: 60px; /* Button shoot sedikit lebih besar */
+    height: 60px;
+    position: absolute;
+    right: 10%; /* Posisi di kanan */
+    bottom: 120%; /* Posisi di atas button kontrol lainnya */
+}
+
+/* Mode Portrait untuk Mobile */
+@media (orientation: portrait) {
+    .game-container {
+        aspect-ratio: 9/16;
+        margin-bottom: 200px; /* Memberikan ruang lebih banyak untuk controls */
+    }
+
+    canvas {
+        max-height: 70vh; /* Membatasi tinggi canvas */
+    }
+
+    .mobile-controls {
+        bottom: 8%;
+    }
+
+    .control-button.shoot {
+        bottom: 140%; /* Posisi shoot button lebih tinggi di mode portrait */
+        right: 5%;
+    }
+}
+
+/* Mode Landscape */
+@media (orientation: landscape) {
+    .game-container {
+        aspect-ratio: 16/9;
+        margin-bottom: 80px;
+    }
+
+    .mobile-controls {
+        bottom: 3%;
+    }
+
+    .control-button {
+        width: 40px;
+        height: 40px;
+    }
+
+    .control-button.shoot {
+        width: 50px;
+        height: 50px;
+        bottom: 100%;
+    }
+}
+
+/* Tablet */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .control-button {
+        width: 55px;
+        height: 55px;
+    }
+
+    .control-button.shoot {
+        width: 65px;
+        height: 65px;
+    }
+}
+
+/* Mobile kecil */
+@media (max-width: 320px) {
+    .control-button {
+        width: 45px;
+        height: 45px;
+    }
+
+    .control-button.shoot {
+        width: 55px;
+        height: 55px;
+    }
 }
 
 /* Responsive design */
-@media (max-width: 768px) {
+@media (min-width: 768px) {
+    .game-container {
+        aspect-ratio: 4/3;
+    }
+    
     .mobile-controls {
-        display: flex;
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .game-container {
+        margin-bottom: 110px;
+    }
+
+    .mobile-controls {
+        bottom: -85px;
+        gap: 30px;
     }
 
     .game-info {
-        font-size: 16px;
+        font-size: 14px;
+        padding: 3px;
     }
 
-    .hp-bar {
-        width: 80px;
+    .hp-fill {
+        width: 60px;
+        height: 12px;
+    }
+
+    .score, .level {
+        margin: 3px 5px;
     }
 
     body {
@@ -152,15 +279,73 @@ canvas {
     }
 }
 
-/* Prevent scrolling on mobile */
+@media (max-height: 600px) {
+    .game-container {
+        aspect-ratio: 16/9;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    .game-info {
+        font-size: 16px;
+    }
+
+    .hp-fill {
+        width: 80px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .game-container {
+        margin-bottom: 120px;
+    }
+
+    .mobile-controls {
+        display: flex;
+        bottom: -90px;
+    }
+
+    .control-button {
+        width: 45px;
+        height: 45px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 768px) and (orientation: landscape) {
+    .game-container {
+        margin-bottom: 60px;
+    }
+
+    .mobile-controls {
+        bottom: -50px;
+        gap: 25px;
+    }
+
+    .control-button {
+        width: 35px;
+        height: 35px;
+        font-size: 11px;
+    }
+}
+
+@media (orientation: portrait) {
+    .game-container {
+        margin-bottom: 130px;
+    }
+
+    .mobile-controls {
+        bottom: -110px;
+    }
+}
+
+@media (min-width: 1025px) {
+    .mobile-controls {
+        display: none;
+    }
+}
+
 html {
     height: -webkit-fill-available;
     overflow: hidden;
-}
-
-body {
-    overflow: hidden;
-    position: fixed;
-    width: 100%;
-    height: 100%;
 }
