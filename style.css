@@ -124,46 +124,57 @@ canvas {
     margin-left: 5px;
 }
 
-/* Mobile controls dengan posisi yang dioptimalkan */
+/* Mobile controls positioning */
 .mobile-controls {
-    position: fixed; /* Mengubah ke fixed untuk posisi yang lebih stabil */
-    bottom: 5%; /* Menggunakan persentase untuk posisi yang lebih responsif */
-    left: 50%;
-    transform: translateX(-50%);
-    display: none;
-    justify-content: space-between; /* Mengubah ke space-between untuk distribusi yang lebih baik */
-    width: 90%;
-    max-width: 400px;
-    z-index: 5;
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    padding: 0 20px;
+    box-sizing: border-box;
+    z-index: 100;
 }
 
 .control-button {
     background: rgba(255, 255, 255, 0.2);
-    padding: 8px;
     border-radius: 50%;
     color: white;
     touch-action: manipulation;
     border: 1px solid rgba(255, 255, 255, 0.5);
-    font-size: 12px;
     user-select: none;
     cursor: pointer;
-    width: 50px; /* Memperbesar ukuran default button */
-    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
     backdrop-filter: blur(2px);
 }
 
-/* Style khusus untuk button shoot */
-.control-button.shoot {
+/* Layout for control buttons */
+#leftButton {
+    order: 1;
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+}
+
+#shootButton {
+    order: 2;
+    width: 80px;
+    height: 80px;
+    font-size: 18px;
     background: rgba(255, 0, 0, 0.2);
     border-color: rgba(255, 0, 0, 0.5);
-    width: 60px; /* Button shoot sedikit lebih besar */
+}
+
+#rightButton {
+    order: 3;
+    width: 60px;
     height: 60px;
-    position: absolute;
-    right: 10%; /* Posisi di kanan */
-    bottom: 120%; /* Posisi di atas button kontrol lainnya */
+    font-size: 24px;
 }
 
 /* Mode Portrait untuk Mobile */
@@ -178,7 +189,7 @@ canvas {
     }
 
     .mobile-controls {
-        bottom: 8%;
+        bottom: 40px;
     }
 
     .control-button.shoot {
@@ -195,18 +206,23 @@ canvas {
     }
 
     .mobile-controls {
-        bottom: 3%;
+        bottom: 20px;
     }
 
     .control-button {
-        width: 40px;
-        height: 40px;
+        width: 50px;
+        height: 50px;
     }
 
     .control-button.shoot {
         width: 50px;
         height: 50px;
         bottom: 100%;
+    }
+
+    #shootButton {
+        width: 70px;
+        height: 70px;
     }
 }
 
@@ -233,6 +249,22 @@ canvas {
     .control-button.shoot {
         width: 55px;
         height: 55px;
+    }
+
+    .mobile-controls {
+        gap: 15px;
+    }
+
+    .control-button {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
+
+    #shootButton {
+        width: 65px;
+        height: 65px;
+        font-size: 16px;
     }
 }
 
@@ -345,7 +377,130 @@ canvas {
     }
 }
 
+/* Small mobile devices */
+@media (max-width: 480px) {
+    .game-info {
+        font-size: 12px;
+    }
+    
+    .hp-fill {
+        width: 50px;
+        height: 10px;
+    }
+    
+    #hpText {
+        font-size: 10px;
+    }
+    
+    .control-button {
+        width: 55px;
+        height: 55px;
+        font-size: 16px;
+    }
+    
+    .control-button.shoot {
+        width: 70px;
+        height: 70px;
+    }
+}
+
+/* iPhone X and newer */
+@media only screen 
+    and (min-device-width: 375px) 
+    and (max-device-width: 812px) 
+    and (-webkit-min-device-pixel-ratio: 3) {
+    .game-container {
+        margin-bottom: 140px;
+    }
+    
+    .mobile-controls {
+        bottom: -115px;
+    }
+}
+
+/* Small height devices */
+@media (max-height: 500px) {
+    .game-container {
+        height: 80vh;
+    }
+    
+    .mobile-controls {
+        bottom: -40px;
+    }
+    
+    .control-button {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+    
+    .control-button.shoot {
+        width: 50px;
+        height: 50px;
+        bottom: 110%;
+    }
+}
+
+/* Ensure content fits on ultra-small screens */
+@media (max-width: 320px) and (max-height: 480px) {
+    .game-container {
+        height: 70vh;
+        margin-bottom: 100px;
+    }
+    
+    .mobile-controls {
+        bottom: -35px;
+    }
+    
+    .control-button {
+        width: 35px;
+        height: 35px;
+        font-size: 12px;
+    }
+    
+    .control-button.shoot {
+        width: 45px;
+        height: 45px;
+    }
+}
+
+/* Ensure safe area for notched devices */
+@supports (padding: max(0px)) {
+    .mobile-controls {
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+}
+
 html {
     height: -webkit-fill-available;
     overflow: hidden;
+}
+
+#loadingScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    z-index: 1000;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

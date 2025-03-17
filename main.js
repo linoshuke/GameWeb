@@ -6,6 +6,10 @@ const playerImage = document.getElementById('playerShip');
 const hpFill = document.getElementById('hpFill');
 const hpText = document.getElementById('hpText');
 
+// Add these variables at the top with your other declarations
+const backgroundImage = document.getElementById('backgroundImg');
+let bgPattern = null;
+
 // Set ukuran canvas
 canvas.width = 800;
 canvas.height = 600;
@@ -32,9 +36,9 @@ const projectileSpeed = 7;
 let aliens = [];
 const alienRows = 3;
 const alienCols = 6;
-const alienWidth = 40;
-const alienHeight = 30;
-const alienPadding = 10;
+let alienWidth = 40;
+let alienHeight = 30;
+let alienPadding = 10;
 let alienDirection = 1;
 let alienStepDown = 30;
 const ALIEN_SHOOT_CHANCE = 0.002;
@@ -61,48 +65,230 @@ let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.
 
 // Fungsi untuk menyesuaikan ukuran canvas
 function resizeCanvas() {
-    const container = canvas.parentElement;
-    const containerWidth = container.clientWidth;
-    
-    // Set ukuran canvas sesuai container dengan aspect ratio 4:3
-    canvas.width = containerWidth;
-    canvas.height = containerWidth * 0.75;
-    
-    // Reset posisi player
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    let canvasWidth, canvasHeight;
+
+    if (window.matchMedia("(orientation: portrait)").matches && isMobile) {
+        // Portrait mode on mobile - use 9:16 ratio
+        canvasWidth = Math.min(windowWidth * 0.95, 720);
+        canvasHeight = (canvasWidth * 16) / 9;
+        
+        // Check if height exceeds available space
+        if (canvasHeight > windowHeight * 0.7) {
+            canvasHeight = windowHeight * 0.7;
+            canvasWidth = (canvasHeight * 9) / 16;
+        }
+    } else {
+        // Landscape or desktop - use 4:3 ratio
+        canvasWidth = Math.min(windowWidth * 0.8, 800);
+        canvasHeight = (canvasWidth * 3) / 4;
+        
+        if (canvasHeight > windowHeight * 0.8) {
+            canvasHeight = windowHeight * 0.8;
+            canvasWidth = (canvasHeight * 4) / 3;
+        }
+    }
+
+    // Update canvas dimensions
+    canvas.width = Math.floor(canvasWidth);
+    canvas.height = Math.floor(canvasHeight);
+
+    // Scale game elements
+    const scaleFactor = canvasWidth / 800; // Use original width as reference
+
+    // Scale player
+    player.width = Math.floor(80 * scaleFactor);
+    player.height = Math.floor(60 * scaleFactor);
     player.x = canvas.width / 2;
-    player.y = canvas.height - 80;
+    player.y = canvas.height - (player.height + 20);
+    player.speed = Math.floor(5 * scaleFactor);
+
+    // Scale aliens
+    alienWidth = Math.floor(40 * scaleFactor);
+    alienHeight = Math.floor(30 * scaleFactor);
+    alienPadding = Math.floor(15 * scaleFactor);
+    alienStepDown = Math.floor(30 * scaleFactor);
+
+    // Adjust enemy positions
+    if (aliens.length > 0) {
+        aliens.forEach(alien => {
+            if (alien.alive) {
+                const ratioX = alien.x / canvas.width;
+                const ratioY = alien.y / canvas.height;
+                alien.width = alienWidth;
+                alien.height = alienHeight;
+                alien.x = ratioX * canvas.width;
+                alien.y = ratioY * canvas.height;
+            }
+        });
+    }
 }
 
 // Tambahkan event listener untuk resize
 window.addEventListener('resize', () => {
-    resizeCanvas();
+    handleOrientationChange();
 });
+
+// Update the orientation handling
+function handleOrientationChange() {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resizeCanvas();
+            // Reposition game elements after resize
+            player.x = canvas.width / 2;
+            player.y = canvas.height - (player.height + 20);
+            
+            // Reposition aliens if they exist
+            if (aliens.length > 0) {
+                initAliens();
+            }
+            resolve();
+        }, 200); // Delay for browser to adjust orientation
+    });
+}
+
+// Replace existing orientation and load listeners
+window.addEventListener('orientationchange', async () => {
+    // Hide canvas during orientation change to prevent visual glitches
+    canvas.style.opacity = '0';
+    await handleOrientationChange();
+    canvas.style.opacity = '1';
+});
+
+// Image preloading system
+const gameAssets = {
+    playerShip: 'Roket.jpeg',
+    backgroundImage: 'bg.jpg',
+    // Add more image assets here as needed
+};
+
+function preloadImages() {
+    const imagePromises = [];
+    const imageCache = {};
+
+    for (const [key, src] of Object.entries(gameAssets)) {
+        const promise = new Promise((resolve) => {
+            const img = new Image();
+            img.src = src;
+            
+            img.onload = () => {
+                imageCache[key] = img;
+                resolve();
+            };
+            
+            img.onerror = () => {
+                console.error(`Failed to load image: ${src}`);
+                resolve();
+            };
+        });
+        
+        imagePromises.push(promise);
+    }
+
+    return Promise.all(imagePromises).then(() => {
+        playerImage.src = imageCache.playerShip.src;
+        backgroundImage = imageCache.background; // Store background reference
+        return imageCache;
+    });
+}
+
+// Update game initialization
+async function initGame() {
+    try {
+        // Show loading indicator if needed
+        // document.getElementById('loadingScreen').style.display = 'block';
+        
+        // Wait for images to load
+        await preloadImages();
+        
+        // Initialize game
+        resizeCanvas();
+        resetGame();
+        
+        // Hide loading indicator if used
+        // document.getElementById('loadingScreen').style.display = 'none';
+        
+        // Start game loop
+        requestAnimationFrame(gameLoop);
+    } catch (error) {
+        console.error('Failed to initialize game:', error);
+        // Handle initialization error
+    }
+}
+
+// Update the load event listener
+window.addEventListener('load', async () => {
+    await handleOrientationChange();
+    initGame();
+});
+
+// Add orientation lock warning for better gameplay
+if (isMobile) {
+    if (window.matchMedia("(orientation: portrait)").matches) {
+        console.log("Game works best in landscape mode on mobile devices");
+    }
+}
 
 // Update touch controls
 if (isMobile) {
-    const leftBtn = document.getElementById('leftButton');
-    const rightBtn = document.getElementById('rightButton');
-    const shootBtn = document.getElementById('shootButton');
-
-    // Touch controls
-    leftBtn.addEventListener('touchstart', (e) => {
+    const mobileControls = document.querySelector('.mobile-controls');
+    mobileControls.style.display = 'flex';
+    
+    // Touch control elements
+    const touchControls = {
+        left: document.getElementById('leftButton'),
+        right: document.getElementById('rightButton'),
+        shoot: document.getElementById('shootButton')
+    };
+    
+    // Touch state tracking
+    const touchState = {
+        left: false,
+        right: false
+    };
+    
+    // Prevent default touch behavior
+    document.addEventListener('touchstart', (e) => {
         e.preventDefault();
+    }, { passive: false });
+    
+    // Left button controls
+    touchControls.left.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        touchState.left = true;
         player.dx = -player.speed;
-    });
-
-    rightBtn.addEventListener('touchstart', (e) => {
+    }, { passive: false });
+    
+    touchControls.left.addEventListener('touchend', (e) => {
         e.preventDefault();
-        player.dx = player.speed;
-    });
-
-    [leftBtn, rightBtn].forEach(btn => {
-        btn.addEventListener('touchend', (e) => {
-            e.preventDefault();
+        touchState.left = false;
+        if (!touchState.right) {
             player.dx = 0;
-        });
-    });
-
-    shootBtn.addEventListener('touchstart', (e) => {
+        } else {
+            player.dx = player.speed;
+        }
+    }, { passive: false });
+    
+    // Right button controls
+    touchControls.right.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        touchState.right = true;
+        player.dx = player.speed;
+    }, { passive: false });
+    
+    touchControls.right.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        touchState.right = false;
+        if (!touchState.left) {
+            player.dx = 0;
+        } else {
+            player.dx = -player.speed;
+        }
+    }, { passive: false });
+    
+    // Shoot button control
+    touchControls.shoot.addEventListener('touchstart', (e) => {
         e.preventDefault();
         if (player.canShoot && !gameOver) {
             projectiles.push({
@@ -117,7 +303,7 @@ if (isMobile) {
                 player.canShoot = true;
             }, buffedCooldown);
         }
-    });
+    }, { passive: false });
 }
 
 // Tambahkan setelah touch controls dan sebelum game loop
@@ -136,7 +322,7 @@ document.addEventListener('keydown', (e) => {
             x: player.x,
             y: player.y - 20
         });
-        
+            
         const buffedCooldown = player.shootCooldown * (1 - attackSpeedBuff);
         
         player.canShoot = false;
@@ -160,6 +346,12 @@ let lastTime = 0;
 const FPS = 60;
 const frameTime = 1000 / FPS;
 
+// Add these variables to your game state section
+let alienStepProgress = 0;
+let isAlienStepping = false;
+const STEP_DURATION = 500; // Time in ms to complete one step down
+
+// Update your gameLoop function to draw background first
 function gameLoop(timestamp) {
     if (!lastTime) lastTime = timestamp;
     
@@ -167,13 +359,22 @@ function gameLoop(timestamp) {
     
     if (deltaTime >= frameTime) {
         if (!gameOver) {
+            // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            updatePlayer();
-            updateProjectiles();
-            updateEnemyLasers();
-            updateAliens();
+            // Draw background first!
+            drawBackground();
             
+            // Calculate scale factor for consistent movement
+            const scaleFactor = deltaTime / (1000/60);
+            
+            // Update with scale factor
+            updatePlayer(scaleFactor);
+            updateProjectiles(scaleFactor);
+            updateEnemyLasers(scaleFactor);
+            updateAliens(scaleFactor, deltaTime); // Pass deltaTime here
+            
+            // Render game elements
             drawPlayer();
             drawProjectiles();
             drawEnemyLasers();
@@ -185,7 +386,103 @@ function gameLoop(timestamp) {
         }
     }
     
-    requestAnimationFrame(gameLoop);
+    // Use RequestAnimationFrame with mobile optimization
+    if ('requestIdleCallback' in window && isMobile) {
+        requestIdleCallback(() => requestAnimationFrame(gameLoop));
+    } else {
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+function updatePlayer(scaleFactor) {
+    const movement = player.dx * scaleFactor;
+    const newX = player.x + movement;
+    
+    if (newX > player.width/2 && newX < canvas.width - player.width/2) {
+        player.x = newX;
+    }
+}
+
+function updateProjectiles(scaleFactor) {
+    const movement = projectileSpeed * scaleFactor;
+    
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+        projectiles[i].y -= movement;
+        if (projectiles[i].y < 0) {
+            projectiles.splice(i, 1);
+        }
+    }
+}
+
+function updateEnemyLasers(scaleFactor) {
+    const movement = enemyLaserSpeed * scaleFactor;
+    
+    for (let i = enemyLasers.length - 1; i >= 0; i--) {
+        enemyLasers[i].y += movement;
+        if (enemyLasers[i].y > canvas.height) {
+            enemyLasers.splice(i, 1);
+        }
+    }
+}
+
+function updateAliens(scaleFactor, deltaTime) {
+    let touchedEdge = false;
+    const movement = alienSpeed * alienDirection * scaleFactor;
+    
+    // Handle horizontal movement and edge detection
+    aliens.forEach(alien => {
+        if (!alien.alive) return;
+        
+        // Only move horizontally if not in stepping motion
+        if (!isAlienStepping) {
+            const newX = alien.x + movement;
+            
+            // Check if would touch edge after movement
+            if (newX <= 0 || newX + alienWidth >= canvas.width) {
+                touchedEdge = true;
+            } else {
+                alien.x = newX;
+            }
+        }
+        
+        // Alien shooting logic
+        if (Math.random() < ALIEN_SHOOT_CHANCE * scaleFactor) {
+            enemyLasers.push({
+                x: alien.x + alienWidth/2,
+                y: alien.y + alienHeight
+            });
+        }
+    });
+    
+    // Handle direction change and stepping down
+    if (touchedEdge) {
+        alienDirection *= -1; // Reverse direction
+        
+        if (!isAlienStepping) {
+            isAlienStepping = true;
+            alienStepProgress = 0;
+        }
+    }
+    
+    // Handle gradual descent
+    if (isAlienStepping) {
+        alienStepProgress += deltaTime;
+        const stepRatio = Math.min(1, alienStepProgress / STEP_DURATION);
+        
+        aliens.forEach(alien => {
+            if (alien.alive) {
+                // Calculate smooth step down movement
+                const stepDistance = alienStepDown * stepRatio * scaleFactor;
+                alien.y += stepDistance * 0.016; // Smooth stepping
+            }
+        });
+        
+        // Reset stepping state when complete
+        if (alienStepProgress >= STEP_DURATION) {
+            isAlienStepping = false;
+            alienStepProgress = 0;
+        }
+    }
 }
 
 // Update inisialisasi game
@@ -195,8 +492,6 @@ function initGame() {
     gameLoop();
 }
 
-// Ganti start game dengan initGame
-initGame();
 
 // Initialize aliens
 function initAliens() {
@@ -214,15 +509,38 @@ function initAliens() {
     }
 }
 
-// Draw functions
+// Update the drawPlayer function
 function drawPlayer() {
-    ctx.drawImage(
-        playerImage,
-        player.x - player.width/2,
-        player.y,
-        player.width,
-        player.height
-    );
+    try {
+        // Save the current context state
+        ctx.save();
+        
+        // Optional: Add image smoothing for better quality
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        // Draw the player image
+        ctx.drawImage(
+            playerImage,
+            player.x - player.width/2,
+            player.y,
+            player.width,
+            player.height
+        );
+        
+        // Restore the context state
+        ctx.restore();
+    } catch (error) {
+        console.error('Error drawing player:', error);
+        // Fallback to a basic shape if image fails
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(
+            player.x - player.width/2,
+            player.y,
+            player.width,
+            player.height
+        );
+    }
 }
 
 function drawProjectiles() {
@@ -246,61 +564,6 @@ function drawEnemyLasers() {
     enemyLasers.forEach(laser => {
         ctx.fillRect(laser.x - 2, laser.y, 4, 10);
     });
-}
-
-// Update functions
-function updatePlayer() {
-    if (player.x + player.dx > player.width/2 && 
-        player.x + player.dx < canvas.width - player.width/2) {
-        player.x += player.dx;
-    }
-}
-
-function updateProjectiles() {
-    for (let i = projectiles.length - 1; i >= 0; i--) {
-        projectiles[i].y -= projectileSpeed;
-        if (projectiles[i].y < 0) {
-            projectiles.splice(i, 1);
-        }
-    }
-}
-
-function updateEnemyLasers() {
-    for (let i = enemyLasers.length - 1; i >= 0; i--) {
-        enemyLasers[i].y += enemyLaserSpeed;
-        if (enemyLasers[i].y > canvas.height) {
-            enemyLasers.splice(i, 1);
-        }
-    }
-}
-
-function updateAliens() {
-    let touchedEdge = false;
-    
-    aliens.forEach(alien => {
-        if (!alien.alive) return;
-        
-        alien.x += alienSpeed * alienDirection;
-        
-        if (alien.x <= 0 || alien.x + alienWidth >= canvas.width) {
-            touchedEdge = true;
-        }
-        
-        // Peluang alien menembak
-        if (Math.random() < ALIEN_SHOOT_CHANCE) {
-            enemyLasers.push({
-                x: alien.x + alienWidth/2,
-                y: alien.y + alienHeight
-            });
-        }
-    });
-    
-    if (touchedEdge) {
-        alienDirection *= -1;
-        aliens.forEach(alien => {
-            alien.y += alienStepDown;
-        });
-    }
 }
 
 // Collision detection
@@ -344,7 +607,7 @@ function checkCollisions() {
                     projectile.x <= alien.x + alien.width &&
                     projectile.y >= alien.y && 
                     projectile.y <= alien.y + alien.height) {
-                    
+                                   
                     alien.alive = false;
                     projectiles.splice(projectileIndex, 1);
                     score += 10;
@@ -396,21 +659,36 @@ function handleGameOver() {
 
 // Tambahkan fungsi reset game
 function resetGame() {
+    // Reset game state
     gameOver = false;
     score = 0;
     level = 1;
     alienSpeed = 1;
     enemiesDefeated = 0;
     attackSpeedBuff = 0;
+    
+    // Clear all arrays
     projectiles = [];
+    enemyLasers = [];
+    aliens = []; // Clear aliens array completely
+    
+    // Reset UI elements
     scoreElement.textContent = score;
     levelElement.textContent = level;
     gameOverScreen.style.display = 'none';
+    
+    // Reset player position and health
     player.x = canvas.width / 2;
-    initAliens();
     player.currentHp = player.maxHp;
     updatePlayerHp(0);
-    enemyLasers = [];
+    
+    // Reinitialize aliens with fresh array
+    initAliens();
+    
+    // Reset alien movement state
+    alienDirection = 1;
+    isAlienStepping = false;
+    alienStepProgress = 0;
 }
 
 // Tambahkan event listener untuk restart button
@@ -418,3 +696,20 @@ restartButton.addEventListener('click', () => {
     resetGame();
     gameLoop();
 });
+
+// Add drawBackground function
+function drawBackground() {
+    if (backgroundImage) {
+        // Option 1: Stretch to canvas size
+        ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+        
+    }
+}
+
+// Add this after your other event listeners
+backgroundImage.onerror = function() {
+    console.error('Failed to load background image');
+    // Fallback to solid color
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+};
