@@ -53,8 +53,5 @@ Kontribusi sangat terbuka! Silakan fork repository ini dan buat pull request unt
 
 ## Lisensi
 
-Proyek ini menggunakan lisensi [MIT](LICENSE).
-
----
 
 Selamat bermain dan berkontribusi!
